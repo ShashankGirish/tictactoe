@@ -1,11 +1,11 @@
 # tictactoe
 Test project to create a game of tic tac toe, while also learning how to use kubernetes and docker.
 
-* [Tools Required] (#tools-required)
-* [Set up docker environment on windows] (#set-up-docker-environment-on-windows)
-* [Create a docker image for the tictactoe application] (#create-a-docker-image-for-the-tictactoe-application)
-* [Deploy postgres] (#deploy-postgres)
-* [Deploy application] (#deploy-application)
+* [Tools Required](#tools-required)
+* [Set up docker environment on windows](#set-up-docker-environment-on-windows)
+* [Create a docker image for the tictactoe application](#create-a-docker-image-for-the-tictactoe-application)
+* [Deploy postgres](#deploy-postgres)
+* [Deploy application](#deploy-application)
 
 
 ## Tools Required:
