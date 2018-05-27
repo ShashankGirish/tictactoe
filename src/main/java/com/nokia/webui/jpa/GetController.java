@@ -118,7 +118,7 @@ public class GetController {
 		String secondaryDiagonal = "";
 		for (int i = 0; i < order; i++) {
 			for (int j = 0; j < table[i].length; j++) {
-				final String character = table[i][j];
+				final String character = "" + table[i][j];
 				columns[j] = (null == columns[j])? character : (columns[j] + character);
 			}	
 			primaryDiagonal += table[i][i];

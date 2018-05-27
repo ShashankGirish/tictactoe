@@ -41,22 +41,23 @@ public class PostController {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/game/{gameId}/move")
 	public String saveMoves(@PathVariable("gameId") final String gameId, @RequestBody final Move move) {
-		String returnValue = "";
+		String returnStatus = "";
 		System.out.println(String.format(" ===========  gameId: [%s], name: [%s], character: [%s], row: [%s], column: [%s].", gameId, move.getName(), move.getCharacter(), move.getRowName(), move.getColumnName()));
 
 		final String uniqueID = UUID.randomUUID().toString();
-		List<Player> listOfPlayers = new ArrayList<Player>();
-		listOfPlayers = playerRepository.findBygameId(gameId);
-		if (listOfPlayers.isEmpty()) {
-			returnValue = "Invalid game id";
+		List<Player> players = new ArrayList<Player>();
+		players = playerRepository.findBygameId(gameId);
+		if (players.isEmpty()) {
+			returnStatus = "Invalid game id.";
 		}
-		for (final Player player : listOfPlayers) {
+		
+		for (final Player player : players) {
 			final String moveGameId = gameId; 
 			move.setGameId(moveGameId);
 			final String playerGameId = player.getGameId();
 			if (playerGameId.equals(moveGameId)) {
-				final int isMovePresent = checkIfMoveAlreadyPresent(move, gameId);
-				if (isMovePresent == 0) {
+				final boolean isCellEmpty = checkIfMoveCellIsEmpty(move, gameId);
+				if (isCellEmpty) {
 					final String name = move.getName();
 					if (name.equals(player.getSecondPlayerName())) {
 						move.setCharacter(player.getSecondPlayerCharacter());
@@ -65,39 +66,34 @@ public class PostController {
 					}
 					move.setSerialNumber(uniqueID);
 					moveRepository.save(move);
-					returnValue = "200 OK";
+					returnStatus = "200 OK";
 					break;
 				} else {
-					returnValue = "Invalid move.Field already occupied";
+					returnStatus = String.format("Invalid move. Cell [%s,%s] already occupied.",move.getRowName(), move.getColumnName());
 					break;
 				}
 			} else {
-				returnValue = "Invalid gameId";
+				returnStatus = "Invalid gameId";
 			}
 		}
-		return returnValue;
+		return returnStatus;
 	}
 
-	private int checkIfMoveAlreadyPresent(final Move move, final String gameId) {
-		int returnValue = 1;
-		List<Move> listOfMoves = new ArrayList<Move>();
-		listOfMoves = moveRepository.findBygameId(gameId);
-		System.out.println("Moves: " + listOfMoves);
-		if (listOfMoves.isEmpty()) {
+	private boolean checkIfMoveCellIsEmpty(final Move currentMove, final String gameId) {
+		final boolean returnValue = true;
+		final String rowName = currentMove.getRowName();
+		final String columnName = currentMove.getColumnName();
+		
+		final List<Move> previousMoves = moveRepository.findBygameId(gameId);
+		System.out.println("Moves: " + previousMoves);
+		if (previousMoves.isEmpty()) {
 			System.out.println("no moves present");
-			returnValue = 0;
+			return true;
 		}
-		for (final Move moveObject : listOfMoves) {
-			if ((moveObject.getName()
-					.equals(move.getName()))
-					&& (moveObject.getRowName().equals(move.getRowName()))
-					&& (moveObject.getColumnName().equals(move.getColumnName()))
-					&& (moveObject.getGameId().equals(move.getGameId()))) {
-				returnValue = 1;
-				break;
-			} else {
-				returnValue = 0;
-			}
+		for (final Move existingMove : previousMoves) {
+			if (existingMove.getRowName().equals(rowName) && existingMove.getColumnName().equals(columnName)) {
+				return false;
+			} 
 		}
 		return returnValue;
 	}
