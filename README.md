@@ -63,22 +63,17 @@ Test project to create a game of tic tac toe, while also learning how to use kub
 
 ## Deploy postgres
 
-1. Pull 	postgres image.
+1. Pull 	postgres image and deploy.
 ```
-    docker pull postgres --image-pull-policy=IfNotPresent
-```
-
-2. Deploy postgres docker image.
-```
-    kubectl run postgres --image=postgres:latest --env="POSTGRES_PASSWORD=postgres"
+    kubectl run postgres --image=postgres:latest --env="POSTGRES_PASSWORD=postgres" --image-pull-policy=IfNotPresent
 ```
 
-3. Expose postgres deployment on desired port.
+2. Expose postgres deployment on desired port.
 ```
     kubectl expose --port=5432 deployment postgres --type=NodePort 
 ```
 
-4. (Optional) Check if service is running and get postgres service url.
+3. (Optional) Check if service is running and get postgres service url.
 ```
     minikube service postgres --url
 ```
@@ -87,17 +82,17 @@ Test project to create a game of tic tac toe, while also learning how to use kub
 
 1.  Deploy the application, set the port to match tomcat port as configured in the application.
 ```
-    kubectl run neotictactoe --image=tictactoe:latest --port=8087 --image-pull-policy=IfNotPresent 
+    kubectl run tictactoe --image=tictactoe:latest --port=8087 --image-pull-policy=IfNotPresent 
 ```
 
 2.  Expose the application deployment.
 ```
-    kubectl expose deployment neotictactoe --type=NodePort
+    kubectl expose deployment tictactoe --type=NodePort
 ```
 
 3. Get the application's service URL.
 ```
-    minikube service neotictactoe --url
+    minikube service tictactoe --url
 ```
 
 Now the containers can be accessed by using docker ip in browser
