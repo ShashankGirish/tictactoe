@@ -56,13 +56,17 @@ public class PostController {
 			move.setGameId(moveGameId);
 			final String playerGameId = player.getGameId();
 			if (playerGameId.equals(moveGameId)) {
+				
 				final boolean isCellEmpty = checkIfMoveCellIsEmpty(move, gameId);
 				if (isCellEmpty) {
 					final String name = move.getName();
 					if (name.equals(player.getSecondPlayerName())) {
 						move.setCharacter(player.getSecondPlayerCharacter());
-					} else {
+					} else if (name.equals(player.getFirstPlayerName())){
 						move.setCharacter(player.getFirstPlayerCharacter());
+					}else{
+						returnStatus = String.format("Invalid player name [%s]. Valid players are [%s], [%s].",name,player.getFirstPlayerName(), player.getSecondPlayerName());
+						break;
 					}
 					move.setSerialNumber(uniqueID);
 					moveRepository.save(move);
