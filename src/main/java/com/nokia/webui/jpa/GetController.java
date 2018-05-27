@@ -4,13 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class GetController {
+
+	private static final int CAPITAL_INTEGER_OFFSET = 64;
 
 	@Autowired
 	PlayerRepository playerRepository;
@@ -18,117 +20,186 @@ public class GetController {
 	@Autowired
 	MoveRepository moveRepository;
 
-	@RequestMapping(method = RequestMethod.GET, value = "/game")
-	public String GetGameInformation(@RequestParam("gameId") String gameId) {
-		int numberOfFill = 0;
-		int xCount = 0;
-		int oCount = 0;
-		String gameState = "";
-		String gameStatus = "";
-		List<String> movesList = new ArrayList<String>();
+	@RequestMapping(method = RequestMethod.GET, value = "/game/{gameId}")
+	public String GetGameInformation(@PathVariable("gameId") final String gameId) {
+		
+		String gameStatus = null;
+		new ArrayList<String>();
 		List<Move> listOfMoves = new ArrayList<Move>();
-		listOfMoves = (List<Move>) moveRepository.findBygameId(gameId);
+		listOfMoves = moveRepository.findBygameId(gameId);
 		List<Player> listOfPlayers = new ArrayList<Player>();
-		listOfPlayers = (List<Player>) playerRepository.findBygameId(gameId);
-		String AA = "null", AB = "null", AC = "null", BA = "null", BB = "null", BC = "null", CA = "null", CB = "null",
-				CC = "null";
+		listOfPlayers = playerRepository.findBygameId(gameId);
+		
 
 		if (listOfPlayers.isEmpty()) {
 			return "<h1>Invalid game id</h1>";
 		}
-		for (Move move : listOfMoves) {
-			String rowName = move.getRowName();
-			String columnName = move.getColumnName();
-			if (rowName.equals("A") && columnName.equals("A")) {
-				AA = move.getCharacter();
-				numberOfFill++;
-				movesList.add(AA);
-			} else if (rowName.equals("A") && columnName.equals("B")) {
-				AB = move.getCharacter();
-				numberOfFill++;
-				movesList.add(AB);
-			} else if (rowName.equals("A") && columnName.equals("C")) {
-				AC = move.getCharacter();
-				numberOfFill++;
-				movesList.add(AC);
-			} else if (rowName.equals("B") && columnName.equals("A")) {
-				BA = move.getCharacter();
-				numberOfFill++;
-				movesList.add(BA);
-			} else if (rowName.equals("B") && columnName.equals("B")) {
-				BB = move.getCharacter();
-				numberOfFill++;
-				movesList.add(BB);
-			} else if (rowName.equals("B") && columnName.equals("C")) {
-				BC = move.getCharacter();
-				numberOfFill++;
-				movesList.add(BC);
-			} else if (rowName.equals("C") && columnName.equals("A")) {
-				CA = move.getCharacter();
-				numberOfFill++;
-				movesList.add(CA);
-			} else if (rowName.equals("C") && columnName.equals("B")) {
-				CB = move.getCharacter();
-				numberOfFill++;
-				movesList.add(CB);
-			} else if (rowName.equals("C") && columnName.equals("C")) {
-				CC = move.getCharacter();
-				numberOfFill++;
-				movesList.add(CC);
+		
+		final Player playerInfo = listOfPlayers.get(0);
+		final String firstPlayerCharacter = playerInfo.getFirstPlayerCharacter();
+		final String firstPlayerName = playerInfo.getFirstPlayerName();
+		final String secondPlayerName = playerInfo.getSecondPlayerName();
+		int firstPlayerCounter = 0;
+		int secondPlayerCounter = 0;
+		int totalMoveCount = 0;
+		
+		final int order = 3;
+		final int maxNumberOfMoves = order*order;
+		final int minNumberOfMovesToWin = order;
+		final String[][] table = new String[order][order];
+		
+		for (final Move move : listOfMoves) {
+			final String rowName = move.getRowName();
+			final String columnName = move.getColumnName();
+			final int rowNumber = rowName.toCharArray()[0] - CAPITAL_INTEGER_OFFSET ;
+			final int columnNumber =columnName.toCharArray()[0] - CAPITAL_INTEGER_OFFSET;
+			System.out.println("row: " + rowNumber + ", column: " + columnNumber);
+			table[rowNumber-1][columnNumber-1] = move.getCharacter();
+			
+			if(firstPlayerCharacter.equals(move.getCharacter())){
+				firstPlayerCounter++;
+			}else{
+				secondPlayerCounter++;
 			}
+			totalMoveCount++;
 		}
-		if (numberOfFill < 8 && numberOfFill > 0) {
-			gameState = "Game ongoing";
-			for (int i = 0; i < movesList.size(); i++) {
-				System.out.println("Size of movesList is:" + movesList.size());
-				if ((movesList.get(i).equals("x"))) {
-					xCount++;
-				} else if ((movesList.get(i).equals("o"))) {
-					oCount++;
-				}
-			}
-			System.out.println("xCount: " + xCount + "oCount: " + oCount);
-			if (xCount > oCount) {
-				for (Player player : listOfPlayers) {
-					String playerCharacter = player.getSecondPlayerCharacter();
-					if (playerCharacter.equals("x")) {
-						System.out.println("xCount > oCount");
-						gameStatus = gameState.concat(",").concat(player.getFirstPlayerName()).concat("'s")
-								.concat("turn");
-						System.out.println("gameStatus is:" + gameStatus);
-					} else {
-						System.out.println("xCount > oCount");
-						gameStatus = gameState.concat(",").concat(player.getSecondPlayerName()).concat("'s")
-								.concat("turn");
-						System.out.println("gameStatus is:" + gameStatus);
+		
+		if (totalMoveCount == 0) {
+			gameStatus = "Game has not started.";
+		} else if (totalMoveCount <= maxNumberOfMoves) {
+			if(totalMoveCount < minNumberOfMovesToWin){
+				gameStatus = getTurnOngoingStatus(playerInfo, firstPlayerCounter, secondPlayerCounter);
+			}else{
+				gameStatus = checkForWins(gameStatus, firstPlayerCharacter, firstPlayerName, secondPlayerName, table);
+				if(null == gameStatus){
+					if( totalMoveCount < maxNumberOfMoves){
+						gameStatus = getTurnOngoingStatus(playerInfo, firstPlayerCounter, secondPlayerCounter);
+					}else{
+						gameStatus = "Game tied.";			
 					}
 				}
-			} else if (oCount > xCount) {
-				for (Player player : listOfPlayers) {
-					String playerCharacter = player.getSecondPlayerCharacter();
-					if (playerCharacter.equals("o")) {
-						System.out.println("oCount > xCount");
-						gameStatus = gameState.concat(",").concat(player.getFirstPlayerName()).concat("'s")
-								.concat("turn");
-						System.out.println("gameStatus is:" + gameStatus);
-					} else {
-						System.out.println("oCount > xCount");
-						gameStatus = gameState.concat(",").concat(player.getSecondPlayerName()).concat("'s")
-								.concat("turn");
-						System.out.println("gameStatus is:" + gameStatus);
-					}
-				}
-
 			}
-		} else if (numberOfFill == 0) {
-			gameStatus = "Game not started yet";
 		}
-		return "<h1>Welcome to tic tac toe game</h1>" + "game id is:" + gameId + "<h2>Game status</h2>" + "<tr>"
-				+ "<td>" + AA + "</td>" + "    " + "<td>" + AB + "</td>" + "    " + "<td>" + AC + "</td>" + "<br>"
-				+ "</tr>" + "<tr>" + "<td>" + BA + "</td>" + "    " + "<td>" + BB + "</td>" + "    " + "<td>" + BC
-				+ "</td>" + "<br>" + "</tr>" + "<tr>" + "<td>" + CA + "</td>" + "    " + "<td>" + CB + "</td>" + "    "
-				+ "<td>" + CC + "</td>" + "</tr>" + "<br>" + "status: " + gameStatus;
+		
+		final StringBuffer tableBody = new StringBuffer();
+		for (int i = 0; i < table.length; i++) {
+			tableBody.append("<tr>");
+			for (int j = 0; j < table[i].length; j++) {
+				tableBody.append("<td>").append(table[i][j]).append("</td>");
+			}
+			tableBody.append("</tr>");
+		}
+		
+		return "<h1>Tic Tac Toe</h1>" 
+		+ "<p><b>Game ID: </b>" + gameId
+		+ "<p><b>Game status</b> "+gameStatus 
+		+ "<br>"
+		
+		+"<table border=\"1\" cellpadding=\"10\">"
+			+ "<tbody align=\"center\">"
+				+ tableBody.toString()
+			+ "</tbody>"
+		+ "</table>"
 
+
+		;
+	}
+
+	public String checkForWins(String gameStatus, final String firstPlayerCharacter, final String firstPlayerName,
+			final String secondPlayerName, final String[][] table) {
+		gameStatus = checkForRowWin(firstPlayerCharacter, firstPlayerName, secondPlayerName, table);
+		if(null != gameStatus){
+			return gameStatus;
+		}
+		
+		final int order = table.length;
+		final String[] columns = new String[order];
+		String primaryDiagonal = "";
+		String secondaryDiagonal = "";
+		for (int i = 0; i < order; i++) {
+			for (int j = 0; j < table[i].length; j++) {
+				final String character = table[i][j];
+				columns[j] = (null == columns[j])? character : (columns[j] + character);
+			}	
+			primaryDiagonal += table[i][i];
+			secondaryDiagonal += table[i][order - i - 1];
+		}
+		
+		String winningCharacter = "";
+		if(!isNotWinningLane(primaryDiagonal)){
+			System.out.println("Primary diagonal winner.");
+			winningCharacter = getFirstCharacter(primaryDiagonal);
+		}else if (!isNotWinningLane(secondaryDiagonal)) {
+			System.out.println("Secondary diagonal winner.");
+			winningCharacter = getFirstCharacter(secondaryDiagonal);
+		}
+		
+		if(!winningCharacter.isEmpty()){
+			return "Game over. Winner: " + (firstPlayerCharacter.equals(winningCharacter)?firstPlayerName:secondPlayerName);
+		}
+		
+
+		boolean columnWin = false;
+		for (final String column : columns) {
+			if(isNotWinningLane(column)){
+				continue;
+			}
+			columnWin = true;
+			winningCharacter = getFirstCharacter(column);
+			break;
+		}
+		
+		if (columnWin) {
+			System.out.println("Column winner.");
+			return "Game over. Winner: " + (firstPlayerCharacter.equals(winningCharacter)?firstPlayerName:secondPlayerName);
+		}
+		
+		return null;
+	}
+
+	public String getFirstCharacter(final String column) {
+		return column.substring(0,1);
+	}
+
+	public boolean isNotWinningLane(final String lane) {
+		return (lane.contains("x") && lane.contains("o")) || lane.contains("null");
+	}
+
+	public String checkForRowWin(final String firstPlayerCharacter, final String firstPlayerName,
+			final String secondPlayerName, final String[][] table) {
+		for (int i = 0; i < table.length; i++) {
+			final String rowFirstCharacter = table[i][0];
+			if(rowFirstCharacter == null){
+				continue;
+			}
+			
+			boolean rowWin = true;
+			for (int j = 1; j < table[i].length; j++) {
+				if(!rowFirstCharacter.equals(table[i][j])){
+					rowWin = false;
+					break;
+				}
+			}
+			if(rowWin){
+				System.out.println("Row winner");
+				return "Game over. Winner: " + (firstPlayerCharacter.equals(rowFirstCharacter)?firstPlayerName:secondPlayerName);
+			}
+		}
+		return null;
+	}
+
+	public String getTurnOngoingStatus(final Player playerInfo, final int firstPlayerCounter, final int secondPlayerCounter) {
+		String gameStatus;
+		final String turn;
+		if(firstPlayerCounter > secondPlayerCounter){
+			turn = playerInfo.getSecondPlayerName() +"'s turn.";
+		}else{
+			turn = playerInfo.getFirstPlayerName() +"'s turn.";
+		}
+		System.out.println(turn);
+		
+		gameStatus = "Game ongoing. " + turn;
+		return gameStatus;
 	}
 
 }

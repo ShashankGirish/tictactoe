@@ -41,7 +41,7 @@ public class Player implements Serializable {
 		return secondPlayerName;
 	}
 
-	public void setsSecondPlayerName(String secondPlayerName) {
+	public void setSecondPlayerName(String secondPlayerName) {
 		this.secondPlayerName = secondPlayerName;
 	}
 

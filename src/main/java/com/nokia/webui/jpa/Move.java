@@ -36,7 +36,7 @@ public class Move implements Serializable {
 		return character;
 	}
 
-	public void setCharacter(String character) {
+	public void setCharacter(final String character) {
 		this.character = character;
 	}
 
@@ -44,7 +44,7 @@ public class Move implements Serializable {
 		return serialNumber;
 	}
 
-	public void setSerialNumber(String serialNumber) {
+	public void setSerialNumber(final String serialNumber) {
 		this.serialNumber = serialNumber;
 	}
 
@@ -52,15 +52,15 @@ public class Move implements Serializable {
 		return gameId;
 	}
 
-	public void setGameId(String gameId) {
+	public void setGameId(final String gameId) {
 		this.gameId = gameId;
 	}
 
-	public String getPlayerName() {
+	public String getName() {
 		return playerName;
 	}
 
-	public void setPlayerName(String playerName) {
+	public void setName(final String playerName) {
 		this.playerName = playerName;
 	}
 
@@ -68,7 +68,7 @@ public class Move implements Serializable {
 		return rowName;
 	}
 
-	public void setRowName(String rowName) {
+	public void setRowName(final String rowName) {
 		this.rowName = rowName;
 	}
 
@@ -76,7 +76,7 @@ public class Move implements Serializable {
 		return columnName;
 	}
 
-	public void setColumnName(String columnName) {
+	public void setColumnName(final String columnName) {
 		this.columnName = columnName;
 	}
 
@@ -88,10 +88,10 @@ public class Move implements Serializable {
 		super();
 	}
 
-	public Move(String gameId, String playerName, String rowName, String columnName) {
+	public Move(final String gameId, final String name, final String rowName, final String columnName) {
 		super();
 		this.gameId = gameId;
-		this.playerName = playerName;
+		this.playerName = name;
 		this.rowName = rowName;
 		this.columnName = columnName;
 	}

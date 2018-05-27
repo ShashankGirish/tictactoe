@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -13,6 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class PostController {
 
+	private static final String O = "o";
+
+	private static final String X = "x";
+
 	@Autowired
 	PlayerRepository playerRepository;
 
@@ -20,38 +25,39 @@ public class PostController {
 	MoveRepository moveRepository;
 
 	@RequestMapping(method = RequestMethod.POST, value = "/game")
-	public String savePlayerDetails(@RequestBody Player playerInfo) {
-		String uniqueID = UUID.randomUUID().toString();
+	public String savePlayerDetails(@RequestBody final Player playerInfo) {
+		final String uniqueID = UUID.randomUUID().toString();
 		System.out.println("UUID value is:" + uniqueID);
-		System.out.println("In post controller, json string is:" + playerInfo.getSecondPlayerCharacter());
-		if (playerInfo.getSecondPlayerCharacter().equalsIgnoreCase("x")) {
-			playerInfo.setFirstPlayerCharacter("o");
-		} else {
-			playerInfo.setFirstPlayerCharacter("x");
-		}
-		playerInfo.setFirstPlayerName("computer");
+		System.out.println("First Player Name:" + playerInfo.getFirstPlayerName());
+		System.out.println("First Player Character:" + playerInfo.getFirstPlayerCharacter().toLowerCase());
+		
+		playerInfo.setSecondPlayerName("computer");
+		playerInfo.setSecondPlayerCharacter(X.equalsIgnoreCase(playerInfo.getFirstPlayerCharacter())?O:X);
+		
 		playerInfo.setGameId(uniqueID);
 		playerRepository.save(playerInfo);
 		return uniqueID;
 	}
 
-	@RequestMapping(method = RequestMethod.POST, value = "/game/move")
-	public String saveMoves(@RequestBody Move move) {
+	@RequestMapping(method = RequestMethod.POST, value = "/game/{gameId}/move")
+	public String saveMoves(@PathVariable("gameId") final String gameId, @RequestBody final Move move) {
 		String returnValue = "";
+		System.out.println(String.format(" ===========  gameId: [%s], name: [%s], character: [%s], row: [%s], column: [%s].", gameId, move.getName(), move.getCharacter(), move.getRowName(), move.getColumnName()));
 
-		String uniqueID = UUID.randomUUID().toString();
+		final String uniqueID = UUID.randomUUID().toString();
 		List<Player> listOfPlayers = new ArrayList<Player>();
-		listOfPlayers = (List<Player>) playerRepository.findAll();
+		listOfPlayers = playerRepository.findBygameId(gameId);
 		if (listOfPlayers.isEmpty()) {
 			returnValue = "Invalid game id";
 		}
-		for (Player player : listOfPlayers) {
-			String moveGameId = move.getGameId();
-			String playerGameId = player.getGameId();
+		for (final Player player : listOfPlayers) {
+			final String moveGameId = gameId; 
+			move.setGameId(moveGameId);
+			final String playerGameId = player.getGameId();
 			if (playerGameId.equals(moveGameId)) {
-				int isMovePresent = checkIfMoveAlreadyPresent(move);
+				final int isMovePresent = checkIfMoveAlreadyPresent(move, gameId);
 				if (isMovePresent == 0) {
-					String name = move.getPlayerName();
+					final String name = move.getName();
 					if (name.equals(player.getSecondPlayerName())) {
 						move.setCharacter(player.getSecondPlayerCharacter());
 					} else {
@@ -72,16 +78,18 @@ public class PostController {
 		return returnValue;
 	}
 
-	private int checkIfMoveAlreadyPresent(Move move) {
+	private int checkIfMoveAlreadyPresent(final Move move, final String gameId) {
 		int returnValue = 1;
 		List<Move> listOfMoves = new ArrayList<Move>();
-		listOfMoves = (List<Move>) moveRepository.findAll();
+		listOfMoves = moveRepository.findBygameId(gameId);
+		System.out.println("Moves: " + listOfMoves);
 		if (listOfMoves.isEmpty()) {
 			System.out.println("no moves present");
 			returnValue = 0;
 		}
-		for (Move moveObject : listOfMoves) {
-			if ((moveObject.getPlayerName().equals(move.getPlayerName()))
+		for (final Move moveObject : listOfMoves) {
+			if ((moveObject.getName()
+					.equals(move.getName()))
 					&& (moveObject.getRowName().equals(move.getRowName()))
 					&& (moveObject.getColumnName().equals(move.getColumnName()))
 					&& (moveObject.getGameId().equals(move.getGameId()))) {

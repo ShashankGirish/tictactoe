@@ -17,10 +17,15 @@ public class DataSourceBean {
     @Bean
     @Primary
     public DataSource getDataSource() {
-        return DataSourceBuilder
+        final String hostname = 
+//        		"localhost";
+        		System.getenv("POSTGRES_SERVICE_HOST");
+		final String port = 
+//				"5432";
+				System.getenv("POSTGRES_SERVICE_PORT");
+		return DataSourceBuilder
                 .create()
-                .url("jdbc:postgresql://"+System.getenv("POSTGRES_SERVICE_HOST") + ":"
-        				+ System.getenv("POSTGRES_SERVICE_PORT") +"/postgres")
+                .url("jdbc:postgresql://"+hostname+ ":"+port+"/postgres")
                 .username("postgres")
                 .password("postgres")
                 .driverClassName("org.postgresql.Driver")
